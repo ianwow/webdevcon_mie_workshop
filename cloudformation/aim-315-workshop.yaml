@@ -205,7 +205,7 @@ Resources:
                       proxy_set_header X-Real-IP ${NginxElasticIP};
                     }
 
-                    location ~ (/_plugin/_search|kibana|/app/kibana|/app/timelion|/bundles|/es_admin|/plugins|/api|/ui|/elasticsearch) {
+                    location ~ (/_plugin|/_search|kibana|/app/kibana|/app/timelion|/bundles|/es_admin|/plugins|/api|/ui|/elasticsearch) {
                       proxy_pass              https://${ESDomain.DomainEndpoint};
                       proxy_set_header        X-Real-IP ${NginxElasticIP};
                     }
