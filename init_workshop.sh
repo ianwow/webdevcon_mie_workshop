@@ -19,12 +19,12 @@ export DATAPLANE_BUCKET=$(aws cloudformation list-exports --query "Exports[?Name
 export MIE_LAYER=$(aws cloudformation list-exports --query "Exports[?Name==\`${STACK_NAME}:MediaInsightsEnginePython38Layer\`].Value" --no-paginate --output text)
 # Set custom resource variable
 export CUSTOM_RESOURCE=$(aws cloudformation list-exports --query "Exports[?Name==\`${STACK_NAME}:WorkflowCustomResourceArn\`].Value" --no-paginate --output text)
-virtualenv aim315-workshop -p $(which python3)
-source ~/environment/aim315-workshop/bin/activate
-cd ~/environment/aim315-workshop/
+cd ~/environment/workshop/
+virtualenv venv -p $(which python3)
+source ~/environment/workshop/venv/bin/activate
 pip install botocore
 pip install awscurl
-pip install aws-sam-cli
+
 
 
 

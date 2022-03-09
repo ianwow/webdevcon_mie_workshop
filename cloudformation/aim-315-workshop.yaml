@@ -13,16 +13,6 @@ Mappings:
       CodeKeyPrefix: "modules/b1d611e21aff47309d68ac4cd5687c55/v1/code"
       TemplateKeyPrefix: "modules/b1d611e21aff47309d68ac4cd5687c55/v1/cf"
 
-Parameters:
-  SpecifyC9Owner:
-    AllowedValues: [true, false]
-    Description: Add an Owner ARN to the C9 Env
-    Type: String
-    Default: true
-
-Conditions:
-  AssignOwnerArn: !Equals [!Ref SpecifyC9Owner, true]
-
 Resources:
   # Deploy MIE Framework
 
@@ -54,12 +44,11 @@ Resources:
     Type: 'AWS::Cloud9::EnvironmentEC2'
     DependsOn: PublicSubnet1RouteTableAssociation
     Properties:
-      Name: Webdevcon-Workshop
-      Description: C9 IDE for AIM315 Workshop
-      OwnerArn: !If [AssignOwnerArn, !Sub "arn:aws:iam::${AWS::AccountId}:assumed-role/TeamRole/MasterKey", !Ref "AWS::NoValue"]
+      Name: WebDevCon-Workshop
+      Description: C9 IDE for WebDevCon Workshop
       Repositories:
-          - PathComponent: /aim315-workshop
-            RepositoryUrl: https://github.com/brandold/aim315workshop.git
+          - PathComponent: /workshop
+            RepositoryUrl: https://github.com/ianwow/webdevcon_mie_workshop.git
       AutomaticStopTimeMinutes: 60
       SubnetId: !Ref PublicSubnet1
       InstanceType: t2.micro
