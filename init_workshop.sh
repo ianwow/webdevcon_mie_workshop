@@ -8,6 +8,7 @@ aws ec2 associate-iam-instance-profile --iam-instance-profile Name=AIM315Worksho
 # Set Nginx EIP variable
 export KIBANA_IP=$(aws cloudformation list-exports --query "Exports[?Name==\`${STACK_NAME}:KibanaIP\`].Value" --no-paginate --output text)
 # Set dataplane variable
+export VUE_APP_OPENSEARCH_ENDPOINT = "http://$KIBANA_IP" 
 export DATAPLANE_API_ENDPOINT=$(aws cloudformation list-exports --query "Exports[?Name==\`${STACK_NAME}:DataplaneApiEndpoint\`].Value" --no-paginate --output text)
 export DATAPLANE_API_NAME=$(aws cloudformation list-exports --query "Exports[?Name==\`${STACK_NAME}:DataPlaneApiHandlerName\`].Value" --no-paginate --output text)
 # Set workflow variable

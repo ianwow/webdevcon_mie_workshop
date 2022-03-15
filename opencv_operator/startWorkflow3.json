@@ -1,0 +1,123 @@
+{
+  "Id": "6a1b4979-d86b-4535-9646-ba84e81c5c48",
+  "Trigger": "api",
+  "CurrentStage": "_Thumbnail",
+  "Globals": {
+    "Media": {
+      "Video": {
+        "S3Bucket": "webdevcon6-miestack-hni5yjkld0nv-dataplane-hfg79lwek6vt",
+        "S3Key": "upload/iss_tour_excerpt.mp4"
+      }
+    },
+    "MetaData": {}
+  },
+  "Configuration": {},
+  "AssetId": "01904dfc-34e6-4189-8b47-1d5d6cc9ef89",
+  "Version": "v0",
+  "Created": "1647032759.217776",
+  "ResourceType": "WORKFLOW_EXECUTION",
+  "ApiVersion": "3.0.0",
+  "Workflow": {
+    "Revisions": "1",
+    "ResourceType": "WORKFLOW",
+    "Stages": {
+      "_Thumbnail": {
+        "ApiVersion": "3.0.0",
+        "Configuration": {
+          "Thumbnail": {
+            "MediaType": "Video",
+            "Enabled": true
+          }
+        },
+        "Version": "v0",
+        "Next": "_shotDetection",
+        "Definition": "{\"StartAt\": \"_Thumbnail\", \"States\": {\"Complete Stage _Thumbnail\": {\"Type\": \"Task\", \"Resource\": \"arn:aws:lambda:us-east-1:773074507832:function:webdevcon6-MieStack-HNI5YJKLD0-CompleteStageLambda-hh5umUAJNoVJ\", \"End\": true}, \"_Thumbnail\": {\"Type\": \"Parallel\", \"Next\": \"Complete Stage _Thumbnail\", \"ResultPath\": \"$.Outputs\", \"Branches\": [{\"StartAt\": \"Filter Thumbnail Media Type? (_Thumbnail)\", \"States\": {\"Filter Thumbnail Media Type? (_Thumbnail)\": {\"Type\": \"Task\", \"Parameters\": {\"StageName.$\": \"$.Name\", \"Name\": \"Thumbnail\", \"Input.$\": \"$.Input\", \"Configuration.$\": \"$.Configuration.Thumbnail\", \"AssetId.$\": \"$.AssetId\", \"WorkflowExecutionId.$\": \"$.WorkflowExecutionId\", \"Type\": \"Video\", \"Status\": \"$.Status\"}, \"Resource\": \"arn:aws:lambda:us-east-1:773074507832:function:webdevcon6-MieStack-HNI5YJKL-FilterOperationLambda-YyJ2q88UjLBe\", \"ResultPath\": \"$.Outputs\", \"OutputPath\": \"$.Outputs\", \"Next\": \"Skip Thumbnail? (_Thumbnail)\", \"Retry\": [{\"ErrorEquals\": [\"Lambda.ServiceException\", \"Lambda.AWSLambdaException\", \"Lambda.SdkClientException\", \"Lambda.Unknown\", \"MasExecutionError\"], \"IntervalSeconds\": 2, \"MaxAttempts\": 2, \"BackoffRate\": 2}], \"Catch\": [{\"ErrorEquals\": [\"States.ALL\"], \"Next\": \"Thumbnail Failed (_Thumbnail)\", \"ResultPath\": \"$.Outputs\"}]}, \"Skip Thumbnail? (_Thumbnail)\": {\"Type\": \"Choice\", \"Choices\": [{\"Variable\": \"$.Status\", \"StringEquals\": \"Started\", \"Next\": \"Execute Thumbnail (_Thumbnail)\"}], \"Default\": \"Thumbnail Not Started (_Thumbnail)\"}, \"Thumbnail Not Started (_Thumbnail)\": {\"Type\": \"Succeed\"}, \"Execute Thumbnail (_Thumbnail)\": {\"Type\": \"Task\", \"Resource\": \"arn:aws:lambda:us-east-1:773074507832:function:webdevcon6-MieStack-HNI5YJK-StartThumbnailFunction-aglQlIYJPTkR\", \"ResultPath\": \"$.Outputs\", \"OutputPath\": \"$.Outputs\", \"Next\": \"Thumbnail Wait (_Thumbnail)\", \"Retry\": [{\"ErrorEquals\": [\"Lambda.ServiceException\", \"Lambda.AWSLambdaException\", \"Lambda.SdkClientException\", \"Lambda.Unknown\", \"MasExecutionError\"], \"IntervalSeconds\": 2, \"MaxAttempts\": 2, \"BackoffRate\": 2}], \"Catch\": [{\"ErrorEquals\": [\"States.ALL\"], \"Next\": \"Thumbnail Failed (_Thumbnail)\", \"ResultPath\": \"$.Outputs\"}]}, \"Thumbnail Wait (_Thumbnail)\": {\"Type\": \"Wait\", \"Seconds\": 10, \"Next\": \"Get Thumbnail Status (_Thumbnail)\"}, \"Get Thumbnail Status (_Thumbnail)\": {\"Type\": \"Task\", \"Resource\": \"arn:aws:lambda:us-east-1:773074507832:function:webdevcon6-MieStack-HNI5YJK-CheckThumbnailFunction-hfxy54CbkWZV\", \"Next\": \"Did Thumbnail Complete (_Thumbnail)\", \"Retry\": [{\"ErrorEquals\": [\"Lambda.ServiceException\", \"Lambda.AWSLambdaException\", \"Lambda.SdkClientException\", \"Lambda.Unknown\", \"MasExecutionError\"], \"IntervalSeconds\": 2, \"MaxAttempts\": 2, \"BackoffRate\": 2}], \"Catch\": [{\"ErrorEquals\": [\"States.ALL\"], \"Next\": \"Thumbnail Failed (_Thumbnail)\", \"ResultPath\": \"$.Outputs\"}]}, \"Did Thumbnail Complete (_Thumbnail)\": {\"Type\": \"Choice\", \"Choices\": [{\"Variable\": \"$.Status\", \"StringEquals\": \"Executing\", \"Next\": \"Thumbnail Wait (_Thumbnail)\"}, {\"Variable\": \"$.Status\", \"StringEquals\": \"Complete\", \"Next\": \"Thumbnail Succeeded (_Thumbnail)\"}], \"Default\": \"Thumbnail Failed (_Thumbnail)\"}, \"Thumbnail Failed (_Thumbnail)\": {\"Type\": \"Task\", \"End\": true, \"Resource\": \"arn:aws:lambda:us-east-1:773074507832:function:webdevcon6-MieStack-HNI5YJKLD-OperatorFailedLambda-G1Nv5NH4DGuE\", \"ResultPath\": \"$\", \"Retry\": [{\"ErrorEquals\": [\"Lambda.ServiceException\", \"Lambda.AWSLambdaException\", \"Lambda.SdkClientException\", \"Lambda.Unknown\", \"MasExecutionError\"], \"IntervalSeconds\": 2, \"MaxAttempts\": 2, \"BackoffRate\": 2}]}, \"Thumbnail Succeeded (_Thumbnail)\": {\"Type\": \"Succeed\"}}}], \"Catch\": [{\"ErrorEquals\": [\"States.ALL\"], \"Next\": \"Complete Stage _Thumbnail\", \"ResultPath\": \"$.Outputs\"}]}}}",
+        "ResourceType": "STAGE",
+        "Id": "84c1435b-aadd-477b-a83e-7060f4e15159",
+        "Operations": [
+          "Thumbnail"
+        ],
+        "Name": "_Thumbnail",
+        "Created": "1646807526.699689",
+        "Status": "Started",
+        "Metrics": {},
+        "AssetId": "01904dfc-34e6-4189-8b47-1d5d6cc9ef89",
+        "WorkflowExecutionId": "6a1b4979-d86b-4535-9646-ba84e81c5c48",
+        "MetaData": {},
+        "Input": {
+          "Media": {
+            "Video": {
+              "S3Bucket": "webdevcon6-miestack-hni5yjkld0nv-dataplane-hfg79lwek6vt",
+              "S3Key": "upload/iss_tour_excerpt.mp4"
+            }
+          },
+          "MetaData": {}
+        }
+      },
+      "OpenCV_Stage": {
+        "ApiVersion": "3.0.0",
+        "Configuration": {
+          "OpenCV": {
+            "MediaType": "Video",
+            "Enabled": true
+          }
+        },
+        "Version": "v0",
+        "Definition": "{\"StartAt\": \"OpenCV_Stage\", \"States\": {\"Complete Stage OpenCV_Stage\": {\"Type\": \"Task\", \"Resource\": \"arn:aws:lambda:us-east-1:773074507832:function:webdevcon6-MieStack-HNI5YJKLD0-CompleteStageLambda-hh5umUAJNoVJ\", \"End\": true}, \"OpenCV_Stage\": {\"Type\": \"Parallel\", \"Next\": \"Complete Stage OpenCV_Stage\", \"ResultPath\": \"$.Outputs\", \"Branches\": [{\"StartAt\": \"Filter OpenCV Media Type? (OpenCV_Stage)\", \"States\": {\"Filter OpenCV Media Type? (OpenCV_Stage)\": {\"Type\": \"Task\", \"Parameters\": {\"StageName.$\": \"$.Name\", \"Name\": \"OpenCV\", \"Input.$\": \"$.Input\", \"Configuration.$\": \"$.Configuration.OpenCV\", \"AssetId.$\": \"$.AssetId\", \"WorkflowExecutionId.$\": \"$.WorkflowExecutionId\", \"Type\": \"Video\", \"Status\": \"$.Status\"}, \"Resource\": \"arn:aws:lambda:us-east-1:773074507832:function:webdevcon6-MieStack-HNI5YJKL-FilterOperationLambda-YyJ2q88UjLBe\", \"ResultPath\": \"$.Outputs\", \"OutputPath\": \"$.Outputs\", \"Next\": \"Skip OpenCV? (OpenCV_Stage)\", \"Retry\": [{\"ErrorEquals\": [\"Lambda.ServiceException\", \"Lambda.AWSLambdaException\", \"Lambda.SdkClientException\", \"Lambda.Unknown\", \"MasExecutionError\"], \"IntervalSeconds\": 2, \"MaxAttempts\": 2, \"BackoffRate\": 2}], \"Catch\": [{\"ErrorEquals\": [\"States.ALL\"], \"Next\": \"OpenCV Failed (OpenCV_Stage)\", \"ResultPath\": \"$.Outputs\"}]}, \"Skip OpenCV? (OpenCV_Stage)\": {\"Type\": \"Choice\", \"Choices\": [{\"Variable\": \"$.Status\", \"StringEquals\": \"Started\", \"Next\": \"Execute OpenCV (OpenCV_Stage)\"}], \"Default\": \"OpenCV Not Started (OpenCV_Stage)\"}, \"OpenCV Not Started (OpenCV_Stage)\": {\"Type\": \"Succeed\"}, \"Execute OpenCV (OpenCV_Stage)\": {\"Type\": \"Task\", \"Resource\": \"arn:aws:lambda:us-east-1:773074507832:function:iantest\", \"ResultPath\": \"$.Outputs\", \"OutputPath\": \"$.Outputs\", \"Next\": \"Did OpenCV Complete (OpenCV_Stage)\", \"Retry\": [{\"ErrorEquals\": [\"Lambda.ServiceException\", \"Lambda.AWSLambdaException\", \"Lambda.SdkClientException\", \"Lambda.Unknown\", \"MasExecutionError\"], \"IntervalSeconds\": 2, \"MaxAttempts\": 2, \"BackoffRate\": 2}], \"Catch\": [{\"ErrorEquals\": [\"States.ALL\"], \"Next\": \"OpenCV Failed (OpenCV_Stage)\", \"ResultPath\": \"$.Outputs\"}]}, \"Did OpenCV Complete (OpenCV_Stage)\": {\"Type\": \"Choice\", \"Choices\": [{\"Variable\": \"$.Status\", \"StringEquals\": \"Complete\", \"Next\": \"OpenCV Succeeded (OpenCV_Stage)\"}], \"Default\": \"OpenCV Failed (OpenCV_Stage)\"}, \"OpenCV Failed (OpenCV_Stage)\": {\"Type\": \"Task\", \"End\": true, \"Resource\": \"arn:aws:lambda:us-east-1:773074507832:function:webdevcon6-MieStack-HNI5YJKLD-OperatorFailedLambda-G1Nv5NH4DGuE\", \"ResultPath\": \"$\", \"Retry\": [{\"ErrorEquals\": [\"Lambda.ServiceException\", \"Lambda.AWSLambdaException\", \"Lambda.SdkClientException\", \"Lambda.Unknown\", \"MasExecutionError\"], \"IntervalSeconds\": 2, \"MaxAttempts\": 2, \"BackoffRate\": 2}]}, \"OpenCV Succeeded (OpenCV_Stage)\": {\"Type\": \"Succeed\"}}}], \"Catch\": [{\"ErrorEquals\": [\"States.ALL\"], \"Next\": \"Complete Stage OpenCV_Stage\", \"ResultPath\": \"$.Outputs\"}]}}}",
+        "End": true,
+        "ResourceType": "STAGE",
+        "Id": "53eb444d-674f-472c-b639-edeb682cb23f",
+        "Operations": [
+          "OpenCV"
+        ],
+        "Name": "OpenCV_Stage",
+        "Created": "1647025546.387291",
+        "Status": "Not Started",
+        "Metrics": {},
+        "AssetId": "01904dfc-34e6-4189-8b47-1d5d6cc9ef89",
+        "WorkflowExecutionId": "6a1b4979-d86b-4535-9646-ba84e81c5c48",
+        "MetaData": {}
+      },
+      "_shotDetection": {
+        "ApiVersion": "3.0.0",
+        "Configuration": {
+          "shotDetection": {
+            "MediaType": "Video",
+            "Enabled": true
+          }
+        },
+        "Version": "v0",
+        "Next": "OpenCV_Stage",
+        "Definition": "{\"StartAt\": \"_shotDetection\", \"States\": {\"Complete Stage _shotDetection\": {\"Type\": \"Task\", \"Resource\": \"arn:aws:lambda:us-east-1:773074507832:function:webdevcon6-MieStack-HNI5YJKLD0-CompleteStageLambda-hh5umUAJNoVJ\", \"End\": true}, \"_shotDetection\": {\"Type\": \"Parallel\", \"Next\": \"Complete Stage _shotDetection\", \"ResultPath\": \"$.Outputs\", \"Branches\": [{\"StartAt\": \"Filter shotDetection Media Type? (_shotDetection)\", \"States\": {\"Filter shotDetection Media Type? (_shotDetection)\": {\"Type\": \"Task\", \"Parameters\": {\"StageName.$\": \"$.Name\", \"Name\": \"shotDetection\", \"Input.$\": \"$.Input\", \"Configuration.$\": \"$.Configuration.shotDetection\", \"AssetId.$\": \"$.AssetId\", \"WorkflowExecutionId.$\": \"$.WorkflowExecutionId\", \"Type\": \"Video\", \"Status\": \"$.Status\"}, \"Resource\": \"arn:aws:lambda:us-east-1:773074507832:function:webdevcon6-MieStack-HNI5YJKL-FilterOperationLambda-YyJ2q88UjLBe\", \"ResultPath\": \"$.Outputs\", \"OutputPath\": \"$.Outputs\", \"Next\": \"Skip shotDetection? (_shotDetection)\", \"Retry\": [{\"ErrorEquals\": [\"Lambda.ServiceException\", \"Lambda.AWSLambdaException\", \"Lambda.SdkClientException\", \"Lambda.Unknown\", \"MasExecutionError\"], \"IntervalSeconds\": 2, \"MaxAttempts\": 2, \"BackoffRate\": 2}], \"Catch\": [{\"ErrorEquals\": [\"States.ALL\"], \"Next\": \"shotDetection Failed (_shotDetection)\", \"ResultPath\": \"$.Outputs\"}]}, \"Skip shotDetection? (_shotDetection)\": {\"Type\": \"Choice\", \"Choices\": [{\"Variable\": \"$.Status\", \"StringEquals\": \"Started\", \"Next\": \"Execute shotDetection (_shotDetection)\"}], \"Default\": \"shotDetection Not Started (_shotDetection)\"}, \"shotDetection Not Started (_shotDetection)\": {\"Type\": \"Succeed\"}, \"Execute shotDetection (_shotDetection)\": {\"Type\": \"Task\", \"Resource\": \"arn:aws:lambda:us-east-1:773074507832:function:webdevcon6-MieStack-HNI5YJKLD0N-startShotDetection-Koo5RUqn2jQ3\", \"ResultPath\": \"$.Outputs\", \"OutputPath\": \"$.Outputs\", \"Next\": \"shotDetection Wait (_shotDetection)\", \"Retry\": [{\"ErrorEquals\": [\"Lambda.ServiceException\", \"Lambda.AWSLambdaException\", \"Lambda.SdkClientException\", \"Lambda.Unknown\", \"MasExecutionError\"], \"IntervalSeconds\": 2, \"MaxAttempts\": 2, \"BackoffRate\": 2}], \"Catch\": [{\"ErrorEquals\": [\"States.ALL\"], \"Next\": \"shotDetection Failed (_shotDetection)\", \"ResultPath\": \"$.Outputs\"}]}, \"shotDetection Wait (_shotDetection)\": {\"Type\": \"Wait\", \"Seconds\": 10, \"Next\": \"Get shotDetection Status (_shotDetection)\"}, \"Get shotDetection Status (_shotDetection)\": {\"Type\": \"Task\", \"Resource\": \"arn:aws:lambda:us-east-1:773074507832:function:webdevcon6-MieStack-HNI5YJKLD0N-checkShotDetection-dtdFn2g23iGe\", \"Next\": \"Did shotDetection Complete (_shotDetection)\", \"Retry\": [{\"ErrorEquals\": [\"Lambda.ServiceException\", \"Lambda.AWSLambdaException\", \"Lambda.SdkClientException\", \"Lambda.Unknown\", \"MasExecutionError\"], \"IntervalSeconds\": 2, \"MaxAttempts\": 2, \"BackoffRate\": 2}], \"Catch\": [{\"ErrorEquals\": [\"States.ALL\"], \"Next\": \"shotDetection Failed (_shotDetection)\", \"ResultPath\": \"$.Outputs\"}]}, \"Did shotDetection Complete (_shotDetection)\": {\"Type\": \"Choice\", \"Choices\": [{\"Variable\": \"$.Status\", \"StringEquals\": \"Executing\", \"Next\": \"shotDetection Wait (_shotDetection)\"}, {\"Variable\": \"$.Status\", \"StringEquals\": \"Complete\", \"Next\": \"shotDetection Succeeded (_shotDetection)\"}], \"Default\": \"shotDetection Failed (_shotDetection)\"}, \"shotDetection Failed (_shotDetection)\": {\"Type\": \"Task\", \"End\": true, \"Resource\": \"arn:aws:lambda:us-east-1:773074507832:function:webdevcon6-MieStack-HNI5YJKLD-OperatorFailedLambda-G1Nv5NH4DGuE\", \"ResultPath\": \"$\", \"Retry\": [{\"ErrorEquals\": [\"Lambda.ServiceException\", \"Lambda.AWSLambdaException\", \"Lambda.SdkClientException\", \"Lambda.Unknown\", \"MasExecutionError\"], \"IntervalSeconds\": 2, \"MaxAttempts\": 2, \"BackoffRate\": 2}]}, \"shotDetection Succeeded (_shotDetection)\": {\"Type\": \"Succeed\"}}}], \"Catch\": [{\"ErrorEquals\": [\"States.ALL\"], \"Next\": \"Complete Stage _shotDetection\", \"ResultPath\": \"$.Outputs\"}]}}}",
+        "ResourceType": "STAGE",
+        "Id": "a27e51e9-6033-4a7f-b658-aef025393467",
+        "Operations": [
+          "shotDetection"
+        ],
+        "Name": "_shotDetection",
+        "Created": "1646807539.56798",
+        "Status": "Not Started",
+        "Metrics": {},
+        "AssetId": "01904dfc-34e6-4189-8b47-1d5d6cc9ef89",
+        "WorkflowExecutionId": "6a1b4979-d86b-4535-9646-ba84e81c5c48",
+        "MetaData": {}
+      }
+    },
+    "Created": "1647026750.878903",
+    "StartAt": "_Thumbnail",
+    "StateMachineArn": "arn:aws:states:us-east-1:773074507832:stateMachine:CosmicRayDetection8-61u7fv",
+    "Version": "v0",
+    "Trigger": "api",
+    "ApiVersion": "3.0.0",
+    "Operations": [
+      "Thumbnail",
+      "shotDetection",
+      "OpenCV"
+    ],
+    "StaleOperations": [],
+    "Id": "16a77f32-e833-4dd0-b4c4-40a5031344b0",
+    "StaleStages": [],
+    "Name": "CosmicRayDetection8"
+  },
+  "Status": "Queued"
+}
