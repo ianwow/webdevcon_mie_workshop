@@ -28,7 +28,7 @@
 import cv2
 import boto3
 import math
-
+from botocore.exceptions import ClientError
 from aws_xray_sdk.core import xray_recorder
 from aws_xray_sdk.core import patch_all
 from MediaInsightsEngineLambdaHelper import MediaInsightsOperationHelper
@@ -77,10 +77,17 @@ def lambda_handler(event, context):
 
     # Save metadata to dataplane
     operator_object.add_workflow_metadata(AssetId=asset_id,WorkflowExecutionId=workflow_id)
-    s3.Bucket(bucket).upload_file("/tmp/output_canny_video.mp4", "/private/assets/"+asset_id+"/output_canny_video.mp4")
-    s3.Bucket(bucket).upload_file("/tmp/output_image.jpg", "/private/assets/"+asset_id+"/output_image.jpg")
-    operator_object.add_media_object("Image", bucket, "/private/assets/"+asset_id+"/output_image.jpg")
-    operator_object.add_media_object("Video", bucket, "/private/assets/"+asset_id+"/output_canny_video.mp4")
+    print("Uploading new media assets to /private/assets/"+asset_id)
+    output_video = "private/assets/"+asset_id+"/output_canny_video.mp4"
+    output_image = "private/assets/"+asset_id+"/output_image.jpg"
+    try:
+        s3.Bucket(bucket).upload_file("/tmp/output_canny_video.mp4", output_video)
+        s3.Bucket(bucket).upload_file("/tmp/output_image.jpg", output_image)
+    except ClientError as e:
+        logging.error(e)
+        return False
+    operator_object.add_media_object("Image", bucket, output_image)
+    operator_object.add_media_object("Video", bucket, output_video)
     dataplane = DataPlane()
     metadata_upload = dataplane.store_asset_metadata(asset_id, operator_object.name, workflow_id, metadata_json)
     print(metadata_upload)
