@@ -5,7 +5,7 @@ Mappings:
 
   MediaInsightsEngine:
     Release:
-      Version: "v3.0.5-ws"
+      Version: "v4.0.1-webdevcon"
   
   SourceCode:
     General:
@@ -45,7 +45,7 @@ Resources:
     DependsOn: PublicSubnet1RouteTableAssociation
     Properties:
       Name: WebDevCon-Workshop
-      Description: C9 IDE for WebDevCon Workshop
+      Description: C9 IDE for WebDevCon Workshop 
       Repositories:
           - PathComponent: /workshop
             RepositoryUrl: https://github.com/ianwow/webdevcon_mie_workshop.git
@@ -129,6 +129,9 @@ Resources:
           yum install -y aws-cfn-bootstrap cloud-init aws-cli
           /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource NginxInstance --region ${AWS::Region} --configsets ec2_setup
           /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource NginxInstance --region ${AWS::Region}
+      Tags:
+        - Key: Name
+          Value: nginx-proxy-for-kibana 
     Metadata:
       AWS::CloudFormation::Init:
         configSets:
@@ -191,8 +194,6 @@ Resources:
                     gzip on;
                     gzip_disable "msie6";
                   
-
-
                   server {
                     listen       80;
 
@@ -527,15 +528,6 @@ Resources:
     Properties:
       RouteTableId: !Ref PublicRouteTable
       SubnetId: !Ref PublicSubnet4
-  
-  SGIngressRuleHTTPS:
-    Type: 'AWS::EC2::SecurityGroupIngress'
-    Properties:
-      GroupId: !GetAtt NginxInstanceSG.GroupId
-      IpProtocol: tcp
-      FromPort: '443'
-      ToPort: '443'
-      CidrIp: 0.0.0.0/0
 
   SGIngressRuleHTTP:
     Type: 'AWS::EC2::SecurityGroupIngress'
@@ -544,17 +536,8 @@ Resources:
       IpProtocol: tcp
       FromPort: '80'
       ToPort: '80'
-      CidrIp: 0.0.0.0/0
+      CidrIp: 10.192.0.0/16
   
-  SGIngressRuleSSH:
-    Type: 'AWS::EC2::SecurityGroupIngress'
-    Properties:
-      GroupId: !GetAtt NginxInstanceSG.GroupId
-      IpProtocol: tcp
-      FromPort: '22'
-      ToPort: '22'
-      CidrIp: 0.0.0.0/0
-
   NginxElasticIP:
     Type: 'AWS::EC2::EIP'
 
@@ -579,17 +562,16 @@ Resources:
       TemplateURL: !Join
         - ""
         - - "https://"
-          - !FindInMap
-            - SourceCode
-            - General
-            - S3Bucket
+          - "rodeolabz-"
+          - !Ref AWS::Region
           - ".s3."
           - !Ref AWS::Region
           - ".amazonaws.com/"
+          - "aws-media-insights-engine/"
           - !FindInMap
-            - SourceCode
-            - General
-            - TemplateKeyPrefix
+            - MediaInsightsEngine
+            - Release
+            - Version
           - "/aim-315-workflow.yaml"
       Parameters:
         WorkflowCustomResourceArn:
@@ -600,37 +582,6 @@ Resources:
           Fn::GetAtt:
             - MieStack
             - Outputs.OperatorLibraryStack
-
-  # Deploy Captioning workflow
-
-  CaptioningWorkflow:
-    Type: "AWS::CloudFormation::Stack"
-    Properties:
-      TemplateURL: !Join
-        - ""
-        - - "https://"
-          - !FindInMap
-            - SourceCode
-            - General
-            - S3Bucket
-          - ".s3."
-          - !Ref AWS::Region
-          - ".amazonaws.com/"
-          - !FindInMap
-            - SourceCode
-            - General
-            - TemplateKeyPrefix
-          - "/aim-315-captioning.yaml"
-      Parameters:
-        WorkflowCustomResourceArn:
-          Fn::GetAtt:
-            - MieStack
-            - Outputs.WorkflowCustomResourceArn
-        OperatorLibraryStack:
-          Fn::GetAtt:
-            - MieStack
-            - Outputs.OperatorLibraryStack
-
 
 Outputs:
   WorkflowApiEndpoint:
@@ -665,7 +616,7 @@ Outputs:
   
   KibanaIP:
     Description: IP of the nginx proxy for kibana
-    Value: !Ref NginxElasticIP
+    Value: !GetAtt NginxInstance.PrivateIp
     Export:
       Name: !Join [":", [!Ref "AWS::StackName", KibanaIP]]
 
