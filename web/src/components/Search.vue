@@ -103,6 +103,7 @@ export default {
       fetch(process.env.VUE_APP_OPENSEARCH_ENDPOINT+'/_search', {
         method: 'post',
         body: JSON.stringify(data),
+        mode: 'cors',
         headers: {'Content-Type': 'application/json'}
       }).then(response =>
           response.json().then(data => ({

@@ -13,16 +13,6 @@ Mappings:
       CodeKeyPrefix: "modules/b1d611e21aff47309d68ac4cd5687c55/v1/code"
       TemplateKeyPrefix: "modules/b1d611e21aff47309d68ac4cd5687c55/v1/cf"
 
-Parameters:
-  SpecifyC9Owner:
-    AllowedValues: [true, false]
-    Description: Add an Owner ARN to the C9 Env
-    Type: String
-    Default: true
-
-Conditions:
-  AssignOwnerArn: !Equals [!Ref SpecifyC9Owner, true]
-
 Resources:
   # Deploy MIE Framework
 
@@ -55,8 +45,7 @@ Resources:
     DependsOn: PublicSubnet1RouteTableAssociation
     Properties:
       Name: WebDevCon-Workshop
-      Description: C9 IDE for WebDevCon Workshop
-      OwnerArn: !If [AssignOwnerArn, !Sub "arn:aws:iam::${AWS::AccountId}:assumed-role/TeamRole/MasterKey", !Ref "AWS::NoValue"]
+      Description: C9 IDE for WebDevCon Workshop 
       Repositories:
           - PathComponent: /workshop
             RepositoryUrl: https://github.com/ianwow/webdevcon_mie_workshop.git
@@ -547,7 +536,7 @@ Resources:
       IpProtocol: tcp
       FromPort: '443'
       ToPort: '443'
-      CidrIp: 0.0.0.0/0
+      CidrIp: 10.192.0.0/16
 
   SGIngressRuleHTTP:
     Type: 'AWS::EC2::SecurityGroupIngress'
@@ -556,7 +545,7 @@ Resources:
       IpProtocol: tcp
       FromPort: '80'
       ToPort: '80'
-      CidrIp: 0.0.0.0/0
+      CidrIp: 10.192.0.0/16
 
   SGIngressRuleSSH:
     Type: 'AWS::EC2::SecurityGroupIngress'
@@ -565,7 +554,7 @@ Resources:
       IpProtocol: tcp
       FromPort: '22'
       ToPort: '22'
-      CidrIp: 0.0.0.0/0
+      CidrIp: 10.192.0.0/16
   
   NginxElasticIP:
     Type: 'AWS::EC2::EIP'
