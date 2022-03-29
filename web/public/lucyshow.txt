@@ -1,9 +1,0 @@
-Phrase	SoundsLike	IPA	DisplayAs
-hammer			
-thingamajig			thingamajig
-gooseneck			gooseneck
-wrench	ranch		wrench
-honey	HUNee		honey
-Mary-Jane			Mary Jane
-Lucy-Carmichael			Lucy Carmichael
-McGillicuddy			McGillicuddy
