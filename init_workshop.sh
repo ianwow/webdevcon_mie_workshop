@@ -14,6 +14,7 @@ export AWS_DEFAULT_REGION='us-east-1'
 export CAS_STACK_NAME=$(aws cloudformation list-stacks --region us-east-1 --query "StackSummaries[-1].StackName" --stack-status-filter CREATE_COMPLETE --output text)
 export OPENSEARCH_STACK_NAME=$(aws cloudformation list-stacks --region us-east-1 --query 'StackSummaries[?starts_with(StackName,`'$CAS_STACK_NAME-Opensearch'`) && StackStatus==`CREATE_COMPLETE`].StackName' --output text)
 export AUTH_STACK_NAME=$(aws cloudformation list-stacks --region us-east-1 --query 'StackSummaries[?starts_with(StackName,`'$CAS_STACK_NAME-Auth'`) && StackStatus==`CREATE_COMPLETE`].StackName' --output text)
+export CAS_USERNAME=$(aws cloudformation describe-stacks --region us-east-1 --stack-name $AUTH_STACK_NAME --query 'Stacks[0].Parameters[?ParameterKey==`AdminEmail`].ParameterValue' --output text)
 export MIE_STACK_NAME=$(aws cloudformation list-stacks --region us-east-1 --query "StackSummaries[-2].StackName" --stack-status-filter CREATE_COMPLETE --output text)
 export C9_EC2_ID=`aws --region $AWS_DEFAULT_REGION ec2 describe-instances --region us-east-1 --filters Name=tag-key,Values='aws:cloud9:environment' Name=instance-state-name,Values='running' --query "Reservations[*].Instances[*].InstanceId" --output text`
 aws --region $AWS_DEFAULT_REGION ec2 associate-iam-instance-profile --iam-instance-profile Name=AIM315WorkshopInstanceProfile --region us-east-1 --instance-id $C9_EC2_ID 2> /dev/null
@@ -43,15 +44,26 @@ echo "Initializing an index pattern for Kibana..."
 curl http://$KIBANA_IP/_plugin/kibana/api/saved_objects/index-pattern -X POST -H 'Content-Type: application/json' -H 'kbn-version: 7.10.2' -d '{"attributes":{"title":"*"}}'
 echo ""
 
-echo "Sample app: "$CAS_URL
+echo "Your sample application URL: "$CAS_URL
+echo "Your login username: "$CAS_USERNAME
+echo ""
+echo "Initializing password for "$CAS_USERNAME
+while true; do
+  echo -n "New Password: " 
+  read -s PASSWORD
+  echo
+  echo -n "New Password (again): " 
+  read -s PASSWORD2
+  echo
+  if [ "$PASSWORD" = "$PASSWORD2" ]; then
+    # Reset password in Cognito
+    aws cognito-idp admin-set-user-password --user-pool-id $USER_POOL_ID --username ${CAS_USERNAME} --password ${PASSWORD} --permanent --region us-east-1
+     if [ $? -eq 0 ]; then break; fi
+  fi
+  echo "Please try again."
+done
+
+echo ""
+echo "Your workshop environment is ready."
+echo "Your sample application is running: "$CAS_URL
 echo "Done"
-
-
-
-
-
-
-
-
-
-
