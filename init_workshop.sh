@@ -43,16 +43,18 @@ export CUSTOM_RESOURCE=$(aws --region $AWS_DEFAULT_REGION cloudformation list-ex
 echo "Initializing an index pattern for Kibana..."
 curl http://$KIBANA_IP/_plugin/kibana/api/saved_objects/index-pattern -X POST -H 'Content-Type: application/json' -H 'kbn-version: 7.10.2' -d '{"attributes":{"title":"*"}}'
 echo ""
-
-echo "Your sample application URL: "$CAS_URL
-echo "You will login with the following username: "$CAS_USERNAME
+echo "-----------------------------------------"
+sleep 2
+echo ""
+echo "Workshop application: "$CAS_URL
+echo "Your username is: "$CAS_USERNAME
 echo ""
 echo "Please set a password for "$CAS_USERNAME
 while true; do
   echo -n "New Password: " 
   read -s PASSWORD1
   echo
-  echo -n "New Password (again): " 
+  echo -n "Verify Password: " 
   read -s PASSWORD2
   echo
   if [ "$PASSWORD1" = "$PASSWORD2" ] && [ "$PASSWORD1" != "" ]; then
@@ -65,5 +67,3 @@ done
 
 echo ""
 echo "Your workshop environment is ready."
-echo "Your sample application is running: "$CAS_URL
-echo "Done"
