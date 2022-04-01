@@ -45,19 +45,19 @@ curl http://$KIBANA_IP/_plugin/kibana/api/saved_objects/index-pattern -X POST -H
 echo ""
 
 echo "Your sample application URL: "$CAS_URL
-echo "Your login username: "$CAS_USERNAME
+echo "You will login with the following username: "$CAS_USERNAME
 echo ""
-echo "Initializing password for "$CAS_USERNAME
+echo "Please set a password for "$CAS_USERNAME
 while true; do
   echo -n "New Password: " 
-  read -s PASSWORD
+  read -s PASSWORD1
   echo
   echo -n "New Password (again): " 
   read -s PASSWORD2
   echo
-  if [ "$PASSWORD" = "$PASSWORD2" ]; then
+  if [ "$PASSWORD1" = "$PASSWORD2" ] && [ "$PASSWORD1" != "" ]; then
     # Reset password in Cognito
-    aws cognito-idp admin-set-user-password --user-pool-id $USER_POOL_ID --username ${CAS_USERNAME} --password ${PASSWORD} --permanent --region us-east-1
+    aws cognito-idp admin-set-user-password --user-pool-id $USER_POOL_ID --username ${CAS_USERNAME} --password ${PASSWORD1} --permanent --region us-east-1
      if [ $? -eq 0 ]; then break; fi
   fi
   echo "Please try again."
