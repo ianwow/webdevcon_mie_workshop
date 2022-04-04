@@ -2,27 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ###############################################################################
-# PURPOSE:
-#   JSON datasets can be precomputed and uploaded along with their associated
-#   media files to MIE. This lambda function is an operator that puts that
-#   precomputed data into DynamoDB. Don't forget to extend the Elasticsearch
-#   consumer (source/consumers/elastic/lambda_handler.py) if you want said data
-#   to be added to Elasticsearch so it can be searched and rendered on the MIE
-#   front-end.
-#
-# USAGE:
-#   Users must use operator configuration parameters "Bucket" and "Key" to
-#   the S3 location of the data file.
-#
-#   To run this operator add
-#   '"GenericDataLookup":{"Bucket": "myBucket", "Key":"test-media/My Video.json", "Enabled":true}'
-#   to the workflow configuration, like this:
-#
-#   curl -k -X POST -H "Authorization: $MIE_ACCESS_TOKEN" -H "Content-Type: application/json" --data '{"Name":"MieCompleteWorkflow","Configuration":{"defaultVideoStage":{"GenericDataLookup":{"Bucket": "myBucket", "Key":"test-media/My Video.json","Enabled":true}}},"Input":{"Media":{"Video":{"S3Bucket":"'$DATAPLANE_BUCKET'","S3Key":"My Video.mp4"}}}}'  $WORKFLOW_API_ENDPOINT/workflow/execution
-#
-#  For instructions on getting $MIE_ACCESS_TOKEN, see:
-#  https://github.com/awslabs/aws-media-insights-engine/blob/master/IMPLEMENTATION_GUIDE.md#step-6-test-your-operator
-
+# PURPOSE: 
+#   This is a sample OpenCV operator for MIE. This operator analyzes 
+#   the first and last frame of the first shot detected by the MIE 
+#   shotDetection operator, looking for non-moving supersaturated pixels. 
+#   This operator must run after shotDetection in an MIE workflow.
 #
 ###############################################################################
 import cv2
@@ -38,9 +22,9 @@ from MediaInsightsEngineLambdaHelper import DataPlane
 patch_all()
 s3 = boto3.resource('s3')
 
+
 # Lambda function entrypoint:
 def lambda_handler(event, context):
-
     print("We got the following event:\n", event)
     operator_object = MediaInsightsOperationHelper(event)
     # Get operator parameters
@@ -55,12 +39,19 @@ def lambda_handler(event, context):
         operator_object.add_workflow_metadata(GenericDataLookupError="No valid inputs")
         raise MasExecutionError(operator_object.return_output_object())
 
+    dataplane = DataPlane()
+
+    # Get metadata from upstream shotDetection operator
+    shot_detection_data = dataplane.retrieve_asset_metadata(asset_id, "shotDetection")
+    print("Shot Detection data:\n", shot_detection_data)
+    start_timestamp = shot_detection_data['results']['Segments'][0]['StartTimestampMillis']
+    end_timestamp = shot_detection_data['results']['Segments'][0]['StartTimestampMillis']
 
     # Generate metadata
-    print("Generating metadata for s3://"+bucket+"/"+key)
+    print("Generating metadata for s3://" + bucket + "/" + key)
 
     try:
-        metadata_json = generate_metadata(bucket, key)
+        metadata_json = generate_metadata(bucket, key, start_timestamp, end_timestamp)
     except Exception as e:
         operator_object.update_workflow_status("Error")
         operator_object.add_workflow_metadata(GenericDataLookupError="Error generating metadata. " + str(e))
@@ -76,10 +67,10 @@ def lambda_handler(event, context):
         raise MasExecutionError(operator_object.return_output_object())
 
     # Save metadata to dataplane
-    operator_object.add_workflow_metadata(AssetId=asset_id,WorkflowExecutionId=workflow_id)
-    print("Uploading new media assets to /private/assets/"+asset_id)
-    output_video = "private/assets/"+asset_id+"/output_canny_video.mp4"
-    output_image = "private/assets/"+asset_id+"/output_image.jpg"
+    operator_object.add_workflow_metadata(AssetId=asset_id, WorkflowExecutionId=workflow_id)
+    print("Uploading new media assets to /private/assets/" + asset_id)
+    output_video = "private/assets/" + asset_id + "/output_canny_video.mp4"
+    output_image = "private/assets/" + asset_id + "/output_image.jpg"
     try:
         s3.Bucket(bucket).upload_file("/tmp/output_canny_video.mp4", output_video)
         s3.Bucket(bucket).upload_file("/tmp/output_image.jpg", output_image)
@@ -88,7 +79,7 @@ def lambda_handler(event, context):
         return False
     operator_object.add_media_object("Image", bucket, output_image)
     operator_object.add_media_object("Video", bucket, output_video)
-    dataplane = DataPlane()
+
     metadata_upload = dataplane.store_asset_metadata(asset_id, operator_object.name, workflow_id, metadata_json)
     print(metadata_upload)
 
@@ -110,8 +101,9 @@ def lambda_handler(event, context):
             operator_object.update_workflow_status("Error")
             raise MasExecutionError(operator_object.return_output_object())
 
-def generate_metadata(bucket, key):
-    input_video='/tmp/input_video.mp4'
+
+def generate_metadata(bucket, key, start_timestamp, end_timestamp):
+    input_video = '/tmp/input_video.mp4'
 
     # Download input video
     s3.Bucket(bucket).download_file(key, input_video)
@@ -119,8 +111,8 @@ def generate_metadata(bucket, key):
     vidcap = cv2.VideoCapture(input_video)
 
     # ANALYZE FRAME #1
-    vidcap.set(cv2.CAP_PROP_POS_MSEC,5000)
-    success,image = vidcap.read()
+    vidcap.set(cv2.CAP_PROP_POS_MSEC, start_timestamp)
+    success, image = vidcap.read()
     if not success:
         print("failed to open input video")
         return {"error", "Failed to open video"}
@@ -129,38 +121,38 @@ def generate_metadata(bucket, key):
     w = image.shape[1]
 
     center_points = []
-    T=5
+    T = 5
     # loop over the image, pixel by pixel, to find specs
-    for x in range(T, w-T-1):
-        for y in range(T, h-T-1):
+    for x in range(T, w - T - 1):
+        for y in range(T, h - T - 1):
             # Find the color differences
-            delta_left = d(image[y][x], image[y][x-T]);
-            delta_right = d(image[y][x], image[y][x+T]);
-            delta_above = d(image[y][x], image[y-T][x]);
-            delta_below = d(image[y][x], image[y+T][x]);
+            delta_left = d(image[y][x], image[y][x - T]);
+            delta_right = d(image[y][x], image[y][x + T]);
+            delta_above = d(image[y][x], image[y - T][x]);
+            delta_below = d(image[y][x], image[y + T][x]);
             if (delta_left > 200 and delta_right > 200 and delta_above > 200 and delta_below > 200):
                 new = True;
                 for center_point in center_points:
                     if abs(center_point[0] - x) < 10 and abs(center_point[1] - y) < 10:
                         new = False;
                 if new:
-                    center_points.append([x,y])
+                    center_points.append([x, y])
 
     # ANALYZE FRAME #2
-    vidcap.set(cv2.CAP_PROP_POS_MSEC,8000)
-    success,image = vidcap.read()
+    vidcap.set(cv2.CAP_PROP_POS_MSEC, end_timestamp)
+    success, image = vidcap.read()
     if not success:
         print("failed to open input video")
         return {"error", "Failed to open video"}
     center_points2 = []
     # loop over the image, pixel by pixel, to find specs
-    for x in range(T, w-T-1):
-        for y in range(T, h-T-1):
+    for x in range(T, w - T - 1):
+        for y in range(T, h - T - 1):
             # Find the color differences
-            delta_left = d(image[y][x], image[y][x-T]);
-            delta_right = d(image[y][x], image[y][x+T]);
-            delta_above = d(image[y][x], image[y-T][x]);
-            delta_below = d(image[y][x], image[y+T][x]);
+            delta_left = d(image[y][x], image[y][x - T]);
+            delta_right = d(image[y][x], image[y][x + T]);
+            delta_above = d(image[y][x], image[y - T][x]);
+            delta_below = d(image[y][x], image[y + T][x]);
             if (delta_left > 150 and delta_right > 150 and delta_above > 150 and delta_below > 150):
                 already_recorded = False
                 for center_point in center_points:
@@ -172,12 +164,12 @@ def generate_metadata(bucket, key):
                     if abs(center_point[0] - x) < 5 and abs(center_point[1] - y) < 5:
                         new = False;
                 if new and already_recorded:
-                    center_points2.append([x,y])
+                    center_points2.append([x, y])
 
     image_annotated = image
     for center_point in center_points2:
         # Center coordinates
-        center_coordinates = (center_point[0],center_point[1])
+        center_coordinates = (center_point[0], center_point[1])
 
         # Radius of circle
         radius = 20
@@ -189,8 +181,7 @@ def generate_metadata(bucket, key):
         thickness = 2
         image_annotated = cv2.circle(image, center_coordinates, radius, color, thickness)
 
-    cv2.imwrite("/tmp/output_image.jpg", image_annotated)     # save frame as JPEG file
-
+    cv2.imwrite("/tmp/output_image.jpg", image_annotated)  # save frame as JPEG file
 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     out = cv2.VideoWriter('/tmp/output_canny_video.mp4', fourcc, 23.976, (1280, 720), isColor=False)
@@ -206,17 +197,14 @@ def generate_metadata(bucket, key):
     vidcap.release()
     out.release()
 
-    return {'num_specs':len(center_points2), 'specs_xy':center_points2}
+    return {'num_specs': len(center_points2), 'specs_xy': center_points2}
 
 
-
-
-
-def d(point1,point2):
+def d(point1, point2):
     x1 = int(point1[0])
     y1 = int(point1[1])
     z1 = int(point1[2])
     x2 = int(point2[0])
     y2 = int(point2[1])
     z2 = int(point2[2])
-    return math.sqrt(((x1-x2)**2) + ((y1-y2)**2) + ((z1-z2)**2))
+    return math.sqrt(((x1 - x2) ** 2) + ((y1 - y2) ** 2) + ((z1 - z2) ** 2))

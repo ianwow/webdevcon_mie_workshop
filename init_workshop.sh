@@ -26,8 +26,7 @@ export USER_POOL_ID=$(aws cloudformation describe-stacks --stack-name $AUTH_STAC
 export VUE_APP_OPENSEARCH_ENDPOINT="http://$KIBANA_IP" 
 # Set dataplane variable
 export DATAPLANE_API_ENDPOINT=$(aws --region $AWS_DEFAULT_REGION cloudformation list-exports --query "Exports[?Name==\`${MIE_STACK_NAME}:DataplaneApiEndpoint\`].Value" --no-paginate --output text)
-export DATAPLANE_API_NAME=$(aws --region $AWS_DEFAULT_REGION cloudformation list-exports --query "Exports[?Name==\`${MIE_STACK_NAME}:DataPlaneApiHandlerName\`].Value" --no-paginate --output text)
-export DATAPLANE_API_ARN=$(aws cloudformation list-exports --query "Exports[?Name==\`${MIE_STACK_NAME}:DataPlaneHandlerArn\`].Value" --no-paginate --output text)
+export DATAPLANE_API_ARN=$(aws cloudformation list-exports --region $AWS_DEFAULT_REGION --query "Exports[?Name==\`${MIE_STACK_NAME}:DataPlaneHandlerArn\`].Value" --no-paginate --output text)
 export DATAPLANE_API_NAME=$(echo $DATAPLANE_API_ARN | awk -F ":" '{print $NF}')
 # Set workflow variable
 export WORKFLOW_API_ENDPOINT=$(aws --region $AWS_DEFAULT_REGION cloudformation list-exports --query "Exports[?Name==\`${MIE_STACK_NAME}:WorkflowApiEndpoint\`].Value" --no-paginate --output text)
