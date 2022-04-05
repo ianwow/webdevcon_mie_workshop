@@ -45,7 +45,7 @@ def lambda_handler(event, context):
     shot_detection_data = dataplane.retrieve_asset_metadata(asset_id, "shotDetection")
     print("Shot Detection data:\n", shot_detection_data)
     start_timestamp = shot_detection_data['results']['Segments'][0]['StartTimestampMillis']
-    end_timestamp = shot_detection_data['results']['Segments'][0]['StartTimestampMillis']
+    end_timestamp = shot_detection_data['results']['Segments'][0]['EndTimestampMillis']
 
     # Generate metadata
     print("Generating metadata for s3://" + bucket + "/" + key)
@@ -103,6 +103,7 @@ def lambda_handler(event, context):
 
 
 def generate_metadata(bucket, key, start_timestamp, end_timestamp):
+    elapsed_time = end_timestamp-start_timestamp
     input_video = '/tmp/input_video.mp4'
 
     # Download input video
@@ -111,7 +112,7 @@ def generate_metadata(bucket, key, start_timestamp, end_timestamp):
     vidcap = cv2.VideoCapture(input_video)
 
     # ANALYZE FRAME #1
-    vidcap.set(cv2.CAP_PROP_POS_MSEC, start_timestamp)
+    vidcap.set(cv2.CAP_PROP_POS_MSEC, end_timestamp-(elapsed_time/2))
     success, image = vidcap.read()
     if not success:
         print("failed to open input video")
@@ -139,11 +140,11 @@ def generate_metadata(bucket, key, start_timestamp, end_timestamp):
                     center_points.append([x, y])
 
     # ANALYZE FRAME #2
-    vidcap.set(cv2.CAP_PROP_POS_MSEC, end_timestamp)
+    vidcap.set(cv2.CAP_PROP_POS_MSEC, end_timestamp-(elapsed_time/4))
     success, image = vidcap.read()
     if not success:
         print("failed to open input video")
-        return {"error", "Failed to open video"}
+    return {"error", "Failed to open video"}
     center_points2 = []
     # loop over the image, pixel by pixel, to find specs
     for x in range(T, w - T - 1):
