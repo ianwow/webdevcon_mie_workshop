@@ -43,7 +43,6 @@ def lambda_handler(event, context):
 
     # Get metadata from upstream shotDetection operator
     shot_detection_data = dataplane.retrieve_asset_metadata(asset_id, "shotDetection")
-    print("Shot Detection data:\n", shot_detection_data)
     start_timestamp = shot_detection_data['results']['Segments'][0]['StartTimestampMillis']
     end_timestamp = shot_detection_data['results']['Segments'][0]['EndTimestampMillis']
 
@@ -107,16 +106,20 @@ def generate_metadata(bucket, key, start_timestamp, end_timestamp):
     input_video = '/tmp/input_video.mp4'
 
     # Download input video
+    print("Downloading video to /tmp")
     s3.Bucket(bucket).download_file(key, input_video)
+    print("Video downloaded.")
 
     vidcap = cv2.VideoCapture(input_video)
+    print("VideoCapture initialized")
 
     # ANALYZE FRAME #1
+    print("Analyzing video frame at " + str(end_timestamp-(elapsed_time/2)))
     vidcap.set(cv2.CAP_PROP_POS_MSEC, end_timestamp-(elapsed_time/2))
     success, image = vidcap.read()
     if not success:
         print("failed to open input video")
-        return {"error", "Failed to open video"}
+        return {"error": "Failed to open video"}
 
     h = image.shape[0]
     w = image.shape[1]
@@ -140,11 +143,13 @@ def generate_metadata(bucket, key, start_timestamp, end_timestamp):
                     center_points.append([x, y])
 
     # ANALYZE FRAME #2
+    print("Analyzing video frame at " + str(end_timestamp-(elapsed_time/4)))
     vidcap.set(cv2.CAP_PROP_POS_MSEC, end_timestamp-(elapsed_time/4))
     success, image = vidcap.read()
     if not success:
         print("failed to open input video")
-    return {"error", "Failed to open video"}
+        return {"error": "Failed to open video"}
+
     center_points2 = []
     # loop over the image, pixel by pixel, to find specs
     for x in range(T, w - T - 1):
@@ -184,6 +189,7 @@ def generate_metadata(bucket, key, start_timestamp, end_timestamp):
 
     cv2.imwrite("/tmp/output_image.jpg", image_annotated)  # save frame as JPEG file
 
+    # Apply a Canny effect on the video to help visualize cosmic ray affects. 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     out = cv2.VideoWriter('/tmp/output_canny_video.mp4', fourcc, 23.976, (1280, 720), isColor=False)
     while vidcap.isOpened():
