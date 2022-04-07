@@ -1,9 +1,12 @@
 # WebDevCon 2022 workshop
 ## Media Insights Engine: A Back-End Solution For Video Processing on AWS
 
-Event page: 
+Event page:
+
 [http://webdevcon.amazon.com/wdc/wdc2022/spring/#schedule](http://webdevcon.amazon.com/wdc/wdc2022/spring/#schedule)
-Workshop procedure: 
+
+Workshop procedure:
+
 [https://catalog.us-east-1.prod.workshops.aws/workshops/5a06b78f-4be9-4420-bd3c-fb3ecafaf4a7/en-US/](https://catalog.us-east-1.prod.workshops.aws/workshops/5a06b78f-4be9-4420-bd3c-fb3ecafaf4a7/en-US/)
 
 ### Abstract 
