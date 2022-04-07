@@ -10,6 +10,7 @@
 #
 ###############################################################################
 import cv2
+import numpy as np
 import boto3
 import math
 from botocore.exceptions import ClientError
@@ -115,32 +116,21 @@ def generate_metadata(bucket, key, start_timestamp, end_timestamp):
 
     # ANALYZE FRAME #1
     print("Analyzing video frame at " + str(end_timestamp-(elapsed_time/2)))
+
     vidcap.set(cv2.CAP_PROP_POS_MSEC, end_timestamp-(elapsed_time/2))
     success, image = vidcap.read()
     if not success:
         print("failed to open input video")
         return {"error": "Failed to open video"}
 
-    h = image.shape[0]
-    w = image.shape[1]
-
-    center_points = []
-    T = 5
-    # loop over the image, pixel by pixel, to find specs
-    for x in range(T, w - T - 1):
-        for y in range(T, h - T - 1):
-            # Find the color differences
-            delta_left = d(image[y][x], image[y][x - T]);
-            delta_right = d(image[y][x], image[y][x + T]);
-            delta_above = d(image[y][x], image[y - T][x]);
-            delta_below = d(image[y][x], image[y + T][x]);
-            if (delta_left > 200 and delta_right > 200 and delta_above > 200 and delta_below > 200):
-                new = True;
-                for center_point in center_points:
-                    if abs(center_point[0] - x) < 10 and abs(center_point[1] - y) < 10:
-                        new = False;
-                if new:
-                    center_points.append([x, y])
+    imgray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    ret, thresh = cv2.threshold(imgray, 50, 255, 0, cv2.THRESH_BINARY)
+    contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    small_contours1 = []
+    for c in contours:
+        perimeter = cv2.arcLength(c, True)
+        if 1 < perimeter < 20:
+            small_contours1.append(c)
 
     # ANALYZE FRAME #2
     print("Analyzing video frame at " + str(end_timestamp-(elapsed_time/4)))
@@ -150,44 +140,34 @@ def generate_metadata(bucket, key, start_timestamp, end_timestamp):
         print("failed to open input video")
         return {"error": "Failed to open video"}
 
-    center_points2 = []
-    # loop over the image, pixel by pixel, to find specs
-    for x in range(T, w - T - 1):
-        for y in range(T, h - T - 1):
-            # Find the color differences
-            delta_left = d(image[y][x], image[y][x - T]);
-            delta_right = d(image[y][x], image[y][x + T]);
-            delta_above = d(image[y][x], image[y - T][x]);
-            delta_below = d(image[y][x], image[y + T][x]);
-            if (delta_left > 150 and delta_right > 150 and delta_above > 150 and delta_below > 150):
-                already_recorded = False
-                for center_point in center_points:
-                    if abs(center_point[0] - x) < 5 and abs(center_point[1] - y) < 5:
-                        already_recorded = True
-                        break
-                new = True;
-                for center_point in center_points2:
-                    if abs(center_point[0] - x) < 5 and abs(center_point[1] - y) < 5:
-                        new = False;
-                if new and already_recorded:
-                    center_points2.append([x, y])
+    imgray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    ret, thresh = cv2.threshold(imgray, 50, 255, 0, cv2.THRESH_BINARY)
+    contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+    small_contours2 = []
+    for c in contours:
+        perimeter = cv2.arcLength(c,True)
+        if 1 < perimeter < 20:
+            small_contours2.append(c)
 
-    image_annotated = image
-    for center_point in center_points2:
-        # Center coordinates
-        center_coordinates = (center_point[0], center_point[1])
-
-        # Radius of circle
-        radius = 20
-
-        # Blue color in BGR
-        color = (0, 0, 255)
-
-        # Line thickness of 2 px
-        thickness = 2
-        image_annotated = cv2.circle(image, center_coordinates, radius, color, thickness)
-
-    cv2.imwrite("/tmp/output_image.jpg", image_annotated)  # save frame as JPEG file
+    image_annotated = image.copy()
+    common_contours = []
+    # Find intersections between contours in both frames
+    for c1 in small_contours1:
+        for c2 in small_contours2:
+            if np.array_equal(c2, c1):
+                common_contours.append(c1)
+        
+    # Draw circles and save a coordinate for each contour
+    coordinates = []
+    for c in common_contours:
+        radius=20
+        color=(0,0,255)
+        thickness=2
+        coodinate = (c[0][0][0], c[0][0][1])
+        coordinates.append(coodinate)
+        cv2.circle(image_annotated, coodinate, radius, color, thickness)
+    
+    cv2.imwrite("/tmp/output_image.jpg", image_annotated)
 
     # Apply a Canny effect on the video to help visualize cosmic ray affects. 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
@@ -204,14 +184,4 @@ def generate_metadata(bucket, key, start_timestamp, end_timestamp):
     vidcap.release()
     out.release()
 
-    return {'num_specs': len(center_points2), 'specs_xy': center_points2}
-
-
-def d(point1, point2):
-    x1 = int(point1[0])
-    y1 = int(point1[1])
-    z1 = int(point1[2])
-    x2 = int(point2[0])
-    y2 = int(point2[1])
-    z2 = int(point2[2])
-    return math.sqrt(((x1 - x2) ** 2) + ((y1 - y2) ** 2) + ((z1 - z2) ** 2))
+    return {'num_specs': len(common_contours), 'specs_xy': str(coordinates)}
