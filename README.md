@@ -18,13 +18,18 @@ At the end of this workshop you will be familiar with AWS AI/ML technologies app
 ### Deploy
 
 Run the following commands to deploy the workshop:
+
 ```
 git clone https://github.com/ianwow/webdevcon_workshop
 export MY_WORKSHOP_BUCKET=...
 aws s3 mb $MY_WORKSHOP_BUCKET
 aws s3 cp cloudformation/aws-content-analysis.template s3://$MY_WORKSHOP_BUCKET/webdevcon/
-
-export TEMPLATE=https://rodeolabz-us-east-1.s3.amazonaws.com/aws-content-analysis/2.0.5-webcondev/aws-content-analysis.template
 export TEMPLATE=https://$MY_WORKSHOP_BUCKET.s3.amazonaws.com/webdevcon/aws-content-analysis.template
 aws cloudformation create-stack --stack-name webdevcon2 --template-url $TEMPLATE --region us-east-1 --parameters ParameterKey=AdminEmail,ParameterValue=admin@example.com ParameterKey=SetupCloud9ForEventEngine,ParameterValue=false --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND --disable-rollback --profile default
+```
+
+The CloudFormation template is hosted in the following location for Event Engine:
+
+```
+https://rodeolabz-us-east-1.s3.amazonaws.com/aws-content-analysis/2.0.5-webcondev/aws-content-analysis.template
 ```
