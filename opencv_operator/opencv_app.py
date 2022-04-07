@@ -1,12 +1,12 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-
 ###############################################################################
 # PURPOSE: 
+#
 #   This is a sample OpenCV operator for MIE. This operator analyzes 
 #   two frames in the middle of the first shot detected by the MIE 
 #   shotDetection operator. It looks for non-moving supersaturated pixels
-#   by using the OpenCV findContours function. Contours with very short 
+#   by using the OpenCV findContours() function. Contours with very short 
 #   perimeters are considered as a potential effect of cosmic ray damage. 
 #   Contours which appear in both of the analyzed frames are considered 
 #   non-moving. This function then returns an x/y coordinate from each of those 
@@ -23,18 +23,32 @@
 #   https://catalog.us-east-1.prod.workshops.aws/workshops/5a06b78f-4be9-4420-bd3c-fb3ecafaf4a7/en-US/module-2
 #
 # SAMPLE OUTPUT:
+# 
+#   The following data will be printed to stdout:
 #
 #   {
 #   "num_specs": 31,
 #   "specs_xy": "[(1045, 697), (1019, 681) ... (1131, 58)]"
 #   }
 #
+#   That data will also be saved to the following location:
+#
+#   s3://$DATAPLANE_BUCKET/private/assets/$ASSET_ID/workflows/$WORKFLOW_ID/$OPERATOR_NAME.json
+#
+#   The first analyzed frame will be annotated with red circles indicating  
+#   potential cosmic ray damage and saved to the following location: 
+#
+#   s3://$DATAPLANE_BUCKET/private/assets/$ASSET_ID/output_image.jpg
+#
+#
 # REFERENCES:
 #
-#   MIE Developer Guide:
+#   1. MIE Developer Guide:
+#
 #   https://github.com/aws-solutions/aws-media-insights-engine/blob/development/IMPLEMENTATION_GUIDE.md#4-implementing-a-new-operator-in-mie
 #
-#   Cosmic ray effects on cameras: 
+#   2. Cosmic ray effects on cameras: 
+#
 #   http://ridl.cfd.rit.edu/products/theses%20and%20senior%20projects/Moser_Final_Paper_May_2017_.pdf
 #
 ###############################################################################
