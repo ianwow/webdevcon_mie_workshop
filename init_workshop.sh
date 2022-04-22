@@ -11,11 +11,11 @@ pip install awscurl
 
 echo "Defining environment variables for workshop procedures..."
 export AWS_DEFAULT_REGION='us-east-1'
-export CAS_STACK_NAME=$(aws cloudformation list-stacks --region us-east-1 --query "StackSummaries[-1].StackName" --stack-status-filter CREATE_COMPLETE --output text)
+export CAS_STACK_NAME=$(aws cloudformation describe-stacks --region us-east-1  --query 'Stacks[?contains(StackName, `MieStack`)].StackName | [-1]' | tr -d '"' | awk -F '-MieStack-' '{print $1}')
+export MIE_STACK_NAME=$(aws cloudformation describe-stacks --region us-east-1  --query 'Stacks[?contains(StackName, `MieStack`)].StackName | [-1]' | tr -d '"' | awk -F '-MieStack-.*-' '{print $1}')
 export OPENSEARCH_STACK_NAME=$(aws cloudformation list-stacks --region us-east-1 --query 'StackSummaries[?starts_with(StackName,`'$CAS_STACK_NAME-Opensearch'`) && StackStatus==`CREATE_COMPLETE`].StackName' --output text)
 export AUTH_STACK_NAME=$(aws cloudformation list-stacks --region us-east-1 --query 'StackSummaries[?starts_with(StackName,`'$CAS_STACK_NAME-Auth'`) && StackStatus==`CREATE_COMPLETE`].StackName' --output text)
 export CAS_USERNAME=$(aws cloudformation describe-stacks --region us-east-1 --stack-name $AUTH_STACK_NAME --query 'Stacks[0].Parameters[?ParameterKey==`AdminEmail`].ParameterValue' --output text)
-export MIE_STACK_NAME=$(aws cloudformation list-stacks --region us-east-1 --query "StackSummaries[-2].StackName" --stack-status-filter CREATE_COMPLETE --output text)
 export C9_EC2_ID=`aws --region $AWS_DEFAULT_REGION ec2 describe-instances --region us-east-1 --filters Name=tag-key,Values='aws:cloud9:environment' Name=instance-state-name,Values='running' --query "Reservations[*].Instances[*].InstanceId" --output text`
 aws --region $AWS_DEFAULT_REGION ec2 associate-iam-instance-profile --iam-instance-profile Name=AIM315WorkshopInstanceProfile --region us-east-1 --instance-id $C9_EC2_ID 2> /dev/null
 export KIBANA_IP=$(aws --region $AWS_DEFAULT_REGION cloudformation list-exports --query "Exports[?Name==\`${OPENSEARCH_STACK_NAME}:KibanaIP\`].Value" --no-paginate --output text)
