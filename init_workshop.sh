@@ -40,15 +40,16 @@ export CUSTOM_RESOURCE=$(aws --region $AWS_DEFAULT_REGION cloudformation list-ex
 
 # Apply patch to support AWS accounts with an AI opt-out policy. 
 # See https://github.com/aws-solutions/media-insights-on-aws/pull/700
+echo "Applying patch to support AWS accounts with an AI opt-out policy."
 export MIE_OPERATOR_STACK_NAME=$(aws cloudformation list-stacks --region us-east-1 --query 'StackSummaries[?starts_with(StackName,`'$MIE_STACK_NAME-OperatorLibrary'`) && StackStatus==`CREATE_COMPLETE`].StackName' --output text)
 FUNCTION_NAME=$(aws --region $AWS_DEFAULT_REGION cloudformation list-stack-resources --stack-name $MIE_OPERATOR_STACK_NAME  --no-paginate --output json --query 'StackResourceSummaries[?LogicalResourceId==`CheckTranscribeFunction`].PhysicalResourceId' --output text)
-wget https://raw.githubusercontent.com/aws-solutions/media-insights-on-aws/9ad1711de00ae278dbf71b0e65d3dc52fa987852/source/operators/transcribe/get_transcribe.py
+wget https://raw.githubusercontent.com/aws-solutions/media-insights-on-aws/9ad1711de00ae278dbf71b0e65d3dc52fa987852/source/operators/transcribe/get_transcribe.py -q
 zip get_transcribe.zip get_transcribe.py
-aws lambda update-function-code --function-name $FUNCTION_NAME --zip-file fileb://get_transcribe.zip --region us-east-1
+aws lambda update-function-code --function-name $FUNCTION_NAME --zip-file fileb://get_transcribe.zip --region us-east-1 > /dev/null
 FUNCTION_NAME=$(aws --region $AWS_DEFAULT_REGION cloudformation list-stack-resources --stack-name $MIE_OPERATOR_STACK_NAME  --no-paginate --output json --query 'StackResourceSummaries[?LogicalResourceId==`StartTranscribeFunction`].PhysicalResourceId' --output text)
-wget https://raw.githubusercontent.com/aws-solutions/media-insights-on-aws/9ad1711de00ae278dbf71b0e65d3dc52fa987852/source/operators/transcribe/start_transcribe.py
+wget https://raw.githubusercontent.com/aws-solutions/media-insights-on-aws/9ad1711de00ae278dbf71b0e65d3dc52fa987852/source/operators/transcribe/start_transcribe.py -q
 zip start_transcribe.zip start_transcribe.py
-aws lambda update-function-code --function-name $FUNCTION_NAME --zip-file fileb://start_transcribe.zip --region us-east-1
+aws lambda update-function-code --function-name $FUNCTION_NAME --zip-file fileb://start_transcribe.zip --region us-east-1 > /dev/null
 
 
 # Initialize the Kibana index pattern 
