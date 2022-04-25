@@ -38,6 +38,19 @@ export MIE_LAYER=$(aws --region $AWS_DEFAULT_REGION cloudformation list-exports 
 # Set custom resource variable
 export CUSTOM_RESOURCE=$(aws --region $AWS_DEFAULT_REGION cloudformation list-exports --query "Exports[?Name==\`${MIE_STACK_NAME}:WorkflowCustomResourceArn\`].Value" --no-paginate --output text)
 
+# Apply patch to support AWS accounts with an AI opt-out policy. 
+# See https://github.com/aws-solutions/media-insights-on-aws/pull/700
+export MIE_OPERATOR_STACK_NAME=$(aws cloudformation list-stacks --region us-east-1 --query 'StackSummaries[?starts_with(StackName,`'$MIE_STACK_NAME-OperatorLibrary'`) && StackStatus==`CREATE_COMPLETE`].StackName' --output text)
+FUNCTION_NAME=$(aws --region $AWS_DEFAULT_REGION cloudformation list-stack-resources --stack-name $MIE_OPERATOR_STACK_NAME  --no-paginate --output json --query 'StackResourceSummaries[?LogicalResourceId==`CheckTranscribeFunction`].PhysicalResourceId' --output text)
+wget https://raw.githubusercontent.com/aws-solutions/media-insights-on-aws/9ad1711de00ae278dbf71b0e65d3dc52fa987852/source/operators/transcribe/get_transcribe.py
+zip get_transcribe.zip get_transcribe.py
+aws lambda update-function-code --function-name $FUNCTION_NAME --zip-file fileb://get_transcribe.zip --region us-east-1
+FUNCTION_NAME=$(aws --region $AWS_DEFAULT_REGION cloudformation list-stack-resources --stack-name $MIE_OPERATOR_STACK_NAME  --no-paginate --output json --query 'StackResourceSummaries[?LogicalResourceId==`StartTranscribeFunction`].PhysicalResourceId' --output text)
+wget https://raw.githubusercontent.com/aws-solutions/media-insights-on-aws/9ad1711de00ae278dbf71b0e65d3dc52fa987852/source/operators/transcribe/start_transcribe.py
+zip start_transcribe.zip start_transcribe.py
+aws lambda update-function-code --function-name $FUNCTION_NAME --zip-file fileb://start_transcribe.zip --region us-east-1
+
+
 # Initialize the Kibana index pattern 
 echo "Initializing an index pattern for Kibana..."
 curl http://$KIBANA_IP/_plugin/kibana/api/saved_objects/index-pattern -X POST -H 'Content-Type: application/json' -H 'kbn-version: 7.10.2' -d '{"attributes":{"title":"*"}}'
